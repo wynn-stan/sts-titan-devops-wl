@@ -1,0 +1,11 @@
+global:
+  scrape_interval: 15s # How often to get data
+
+scrape_configs:
+  - job_name: "prometheus_monitor"
+    static_configs:
+      - targets: ["localhost:9090"] # Have prometheus monitor itself
+
+  - job_name: "docker_monitor"
+    static_configs:
+        - targets: ["host.docker.internal:9323"] # Have prometheus monitor docker

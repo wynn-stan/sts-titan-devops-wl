@@ -1,0 +1,30 @@
+FROM ubuntu:latest
+MAINTAINER titan@slightlytechie.com
+
+RUN apt-get update
+RUN apt-get install -y python3
+RUN apt-get install -y python3-pip
+RUN pip3 install flask
+RUN pip3 install redis
+RUN pip3 install mysql-connector-python
+
+# Having the "RUN" layer on multiple lines leads to each line being cached and snapshotted. This would lead to a bigger size than necessary.
+
+ADD . /app
+WORKDIR /app
+
+# The ADD command has been issued before the WORKDIR. Best to set the WORKDIR first before making changes to the workspace. 
+
+RUN chmod -R 777 /app
+
+ENV DB_HOST=localhost
+ENV DB_USER=root
+ENV DB_PASS=password123
+
+# It is generally more performant to combine environments into a single layer rather than individual layers.
+# Alternatively for security, we could pass this at runtime with the --env flags or --env-file
+
+EXPOSE 5000
+
+CMD python3 app.py
+ 

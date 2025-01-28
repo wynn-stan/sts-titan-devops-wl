@@ -1,0 +1,50 @@
+version: "3" # This is the docker compose version.
+services: # this defines the services/containers we want to start
+  wordpress-test: # This is the name of the container we want to spin up
+    image: wordpress:latest # This is the image name for wordpress
+    ports:
+      - "8080:80"
+    environment:
+      WORDPRESS_DB_HOST: db
+      WORDPRESS_DB_USER: wp_user
+      WORDPRESS_DB_PASSWORD: wp_password
+      WORDPRESS_DB_NAME: wp_db
+    depends_on:
+      - db # wait on this container to start first
+    networks:
+      - wp_network
+
+  db:
+    image: mysql:5.7
+    environment:
+      MYSQL_ROOT_PASSWORD: root_password
+      MYSQL_DATABASE: wp_db
+      MYSQL_USER: wp_user
+      MYSQL_PASSWORD: wp_password
+    volumes:
+      - db_data:/var/lib/mysql
+    networks:
+      - wp_network
+
+  phpmyadmin:
+    image: phpmyadmin/phpmyadmin
+    ports:
+      - "8081:80"
+    environment:
+      PMA_HOST: db
+      MySQL_ROOT_PASSWORD: root_password
+    depends_on:
+      - db
+    networks:
+      - wp_network
+
+  redis:
+    image: redis:alpine
+    networks:
+      - wp_network
+
+volumes:
+  db_data:
+
+networks:
+  wp_network:
