@@ -1,9 +1,6 @@
-FROM python:3
+FROM python:3.11-slim-bookworm
 
 LABEL maintainer=titan@slightlytechie.com
-
-RUN apt-get update && \
-    apt-get install -y python3 python3-pip 
 
 RUN pip3 install flask && \
     pip3 install redis && \
