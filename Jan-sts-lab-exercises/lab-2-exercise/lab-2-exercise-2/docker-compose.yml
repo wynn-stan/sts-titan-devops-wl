@@ -1,42 +1,71 @@
-version: "3" # This is the docker compose version.
+#version: "3" # Seems specifying the docker version is being deprecated
+
 services: # this defines the services/containers we want to start
   wordpress-test: # This is the name of the container we want to spin up
     image: wordpress:latest # This is the image name for wordpress
+    restart: unless-stopped
     ports:
       - "8080:80"
     environment:
       WORDPRESS_DB_HOST: db
       WORDPRESS_DB_USER: wp_user
-      WORDPRESS_DB_PASSWORD: wp_password
+      WORDPRESS_DB_PASSWORD_FILE: /run/secrets/mysql_db_password
       WORDPRESS_DB_NAME: wp_db
     depends_on:
       - db # wait on this container to start first
     networks:
       - wp_network
+    secrets:
+      - mysql_db_password
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:80/etc"]
+      retries: 3
+      timeout: 10s
+      interval: 30s
+      start_period: 10s
 
   db:
-    image: mysql:5.7
+    image: mysql:lts
+    restart: unless-stopped
     environment:
-      MYSQL_ROOT_PASSWORD: root_password
+      MYSQL_ROOT_PASSWORD_FILE: /run/secrets/mysql_root_password
       MYSQL_DATABASE: wp_db
       MYSQL_USER: wp_user
-      MYSQL_PASSWORD: wp_password
+      MYSQL_PASSWORD_FILE: /run/secrets/mysql_db_password
     volumes:
       - db_data:/var/lib/mysql
     networks:
       - wp_network
+    secrets:
+      - mysql_db_password
+      - mysql_root_password
+    healthcheck:
+      test: ["CMD", "mysqladmin", "ping", "-h", "localhost"]
+      retries: 3
+      timeout: 10s
+      interval: 30s
+      start_period: 10s
 
   phpmyadmin:
     image: phpmyadmin/phpmyadmin
+    restart: unless-stopped
     ports:
       - "8081:80"
     environment:
       PMA_HOST: db
-      MySQL_ROOT_PASSWORD: root_password
+      MySQL_ROOT_PASSWORD_FILE: /run/secrets/mysql_root_password
     depends_on:
       - db
     networks:
       - wp_network
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:80"]
+      retries: 3
+      timeout: 10s
+      interval: 30s
+      start_period: 10s
+    secrets:
+      - mysql_root_password
 
   redis:
     image: redis:alpine
@@ -48,3 +77,9 @@ volumes:
 
 networks:
   wp_network:
+
+secrets:
+  mysql_db_password:
+    file: ./secrets/mysql_db_password.txt
+  mysql_root_password:
+    file: ./secrets/mysql_root_password.txt
